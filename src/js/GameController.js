@@ -20,6 +20,7 @@ export default class GameController {
 
   init() {
     // TODO: add event listeners to gamePlay events
+    this.gamePlay.
     // TODO: load saved stated from stateService
     this.gamePlay.drawUi('prairie');
     this.playerCharacters = generateTeam(this.playerAllowedTypes, 1, 3);
