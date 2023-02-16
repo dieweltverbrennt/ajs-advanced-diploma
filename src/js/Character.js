@@ -24,4 +24,11 @@ export default class Character {
       throw new Error('You can not create an object of the Character class!');
     }
   }
+
+  levelUp() {
+    this.level += 1;
+    this.attack = Math.max(this.attack, this.attack * ((this.health + 80) / 100));
+    this.defence = Math.max(this.defence, this.defence * ((this.health + 80) / 100));
+    this.health = Math.min(this.health + 80, 100);
+  }
 }

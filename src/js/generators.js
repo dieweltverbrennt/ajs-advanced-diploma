@@ -12,7 +12,13 @@ export function* characterGenerator(allowedTypes, maxLevel) {
   // TODO: write logic here
   const randomType = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
   const randomCharacter = Object.create(randomType);
-  randomCharacter.level = Math.floor(1 + Math.random() * maxLevel);
+  const randomLevel = Math.floor(1 + Math.random() * maxLevel);
+  randomCharacter.level = 1;
+  if (randomLevel > 1) {
+    for (let i = 1; i < randomLevel; i += 1) {
+      randomCharacter.levelUp();
+    }
+  }
   yield randomCharacter;
 }
 
