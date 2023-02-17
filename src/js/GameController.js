@@ -100,8 +100,8 @@ export default class GameController {
         const enemy = this.enemyPositions.find((item) => item.position === index);
         // attack
         if (enemy !== undefined && this.calcAttackRange(this.selectedCharacter).includes(index)) {
-          this.gamePlay.showDamage(index, this.selectedCharacter.character.attack).then(() => {
-            const damage = this.calcDamage(this.selectedCharacter.character, enemy.character);
+          const damage = this.calcDamage(this.selectedCharacter.character, enemy.character);
+          this.gamePlay.showDamage(index, damage).then(() => {
             enemy.character.health -= damage;
             if (enemy.character.health <= 0) {
               enemy.character.health = 0;
@@ -233,7 +233,10 @@ export default class GameController {
     }
     const restPositions = this.charactersPositions.filter((item) => item !== char);
     for (const pos of restPositions) {
-      allowedMoves.filter((item) => item !== pos.position);
+      const toDel = allowedMoves.indexOf(pos.position);
+      if (toDel !== -1) {
+        allowedMoves.splice(toDel, 1);
+      }
     }
     return allowedMoves.filter((item) => item >= 0 && item < size * size);
   }
@@ -299,14 +302,16 @@ export default class GameController {
         const arr = this.calcAttackRange(enemy);
         const target = this.playerPositions.find((item) => arr.some((el) => el === item.position));
         if (target !== undefined) {
-          this.gamePlay.showDamage(target.position, enemy.character.attack).then(() => {
-            const damage = this.calcDamage(enemy.character, target.character);
+          const damage = this.calcDamage(enemy.character, target.character);
+          this.gamePlay.showDamage(target.position, damage).then(() => {
             target.character.health -= damage;
             if (target.character.health <= 0) {
               this.charactersPositions = this.charactersPositions.filter((item) => item !== target);
               this.playerPositions = this.playerPositions.filter((item) => item !== target);
               this.gamePlay.deselectCell(target.position);
+              this.gamePlay.deselectCell(this.selectedCell);
               this.selectedCell = null;
+              this.selectedCharacter = null;
             }
           }).then(() => {
             this.gamePlay.redrawPositions(this.charactersPositions);
@@ -369,7 +374,16 @@ export default class GameController {
     this.selectedCell = null;
     this.userTurn = true;
     this.level = 1;
-    this.init();
+
+    this.gamePlay.drawUi(themes[this.level]);
+    this.playerCharacters = generateTeam(this.playerAllowedTypes, this.level, 3);
+    this.enemyCharacters = generateTeam(this.enemyAllowedTypes, this.level, 3);
+    this.playerTeam = new Team(this.playerCharacters);
+    this.enemyTeam = new Team(this.enemyCharacters);
+    this.playerPositions = [...this.playerPosition()];
+    this.enemyPositions = [...this.enemyPosition()];
+    this.charactersPositions = [...this.playerPositions, ...this.enemyPositions];
+    this.gamePlay.redrawPositions(this.charactersPositions);
   }
 
   onSaveGameClick() {
@@ -378,15 +392,19 @@ export default class GameController {
     this.gameState.userTurn = this.userTurn;
     this.gameState.selectedCharacter = this.selectedCharacter;
     this.gameState.selectedCell = this.selectedCell;
+    this.gameState.playerCharacters = [];
     this.playerCharacters.forEach((item) => {
       this.gameState.playerCharacters.push(Object.getPrototypeOf(item));
     });
+    this.gameState.enemyCharacters = [];
     this.enemyCharacters.forEach((item) => {
       this.gameState.enemyCharacters.push(Object.getPrototypeOf(item));
     });
+    this.gameState.playerPositions = [];
     this.playerPositions.forEach((item) => {
       this.gameState.playerPositions.push(item.position);
     });
+    this.gameState.enemyPositions = [];
     this.enemyPositions.forEach((item) => {
       this.gameState.enemyPositions.push(item.position);
     });
