@@ -130,7 +130,7 @@ export default class GameController {
           this.userTurn = false;
           this.enemyMove();
         } else {
-          GamePlay.showError('The action is not unacceptable!');
+          GamePlay.showError('Incorrect action!');
         }
       } else {
         GamePlay.showError('The character is not selected!');
