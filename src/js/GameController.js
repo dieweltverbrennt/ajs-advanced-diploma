@@ -101,7 +101,7 @@ export default class GameController {
         // attack
         if (enemy !== undefined && this.calcAttackRange(this.selectedCharacter).includes(index)) {
           const damage = this.calcDamage(this.selectedCharacter.character, enemy.character);
-          this.gamePlay.showDamage(index, damage).then(() => {
+          this.gamePlay.showDamage(index, Math.floor(damage)).then(() => {
             enemy.character.health -= damage;
             if (enemy.character.health <= 0) {
               enemy.character.health = 0;
@@ -110,16 +110,17 @@ export default class GameController {
             }
           }).then(() => {
             if (this.level === 4 && this.enemyPositions.length === 0) {
+              this.gamePlay.redrawPositions(this.charactersPositions);
+              this.gamePlay.deselectCell(enemy.position);
               this.gameEnd();
-              GamePlay.showMessage('You win!');
+              setTimeout(() => GamePlay.showMessage('You win!'), 500);
             } else if (this.enemyPositions.length === 0) {
               this.levelUp();
             } else {
               this.gamePlay.redrawPositions(this.charactersPositions);
+              this.userTurn = false;
+              this.enemyMove();
             }
-          }).then(() => {
-            this.userTurn = false;
-            this.enemyMove();
           });
         } else if (this.calcMoveRange(this.selectedCharacter).includes(index)) {
           this.gamePlay.deselectCell(this.selectedCharacter.position);
@@ -303,7 +304,7 @@ export default class GameController {
         const target = this.playerPositions.find((item) => arr.some((el) => el === item.position));
         if (target !== undefined) {
           const damage = this.calcDamage(enemy.character, target.character);
-          this.gamePlay.showDamage(target.position, damage).then(() => {
+          this.gamePlay.showDamage(target.position, Math.floor(damage)).then(() => {
             target.character.health -= damage;
             if (target.character.health <= 0) {
               this.charactersPositions = this.charactersPositions.filter((item) => item !== target);
@@ -311,13 +312,16 @@ export default class GameController {
               this.gamePlay.deselectCell(target.position);
               this.gamePlay.deselectCell(this.selectedCell);
               this.selectedCell = null;
-              this.selectedCharacter = null;
+              if (this.selectedCharacter === target) {
+                this.selectedCharacter = null;
+              }
             }
           }).then(() => {
             this.gamePlay.redrawPositions(this.charactersPositions);
             if (this.playerPositions.length === 0) {
+              this.gamePlay.redrawPositions(this.charactersPositions);
               this.gameEnd();
-              GamePlay.showMessage('You lose!');
+              setTimeout(() => GamePlay.showMessage('You lose!'), 500);
             }
           });
           isMoveDone = true;
