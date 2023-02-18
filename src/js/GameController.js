@@ -368,6 +368,8 @@ export default class GameController {
     this.gamePlay.cellEnterListeners = [];
     this.gamePlay.cellClickListeners = [];
     this.gamePlay.cellLeaveListeners = [];
+
+    this.isGameEnd = true;
   }
 
   onNewGameClick() {
@@ -378,6 +380,12 @@ export default class GameController {
     this.selectedCell = null;
     this.userTurn = true;
     this.level = 1;
+
+    if (this.isGameEnd) {
+      this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
+      this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
+      this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
+    }
 
     this.gamePlay.drawUi(themes[this.level]);
     this.playerCharacters = generateTeam(this.playerAllowedTypes, this.level, 3);
