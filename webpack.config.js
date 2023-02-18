@@ -11,8 +11,8 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.png/,
-        type: 'asset/resource',
+        test: /\.(png|jpg|gif)$/,
+        type: 'asset/inline',
       },
       {
         test: /\.js$/,
