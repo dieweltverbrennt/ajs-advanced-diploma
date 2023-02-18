@@ -113,6 +113,7 @@ export default class GameController {
               this.gamePlay.redrawPositions(this.charactersPositions);
               this.gamePlay.deselectCell(enemy.position);
               this.gameEnd();
+              this.isGameEnd = true;
               setTimeout(() => GamePlay.showMessage('You win!'), 500);
             } else if (this.enemyPositions.length === 0) {
               this.levelUp();
