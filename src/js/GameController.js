@@ -435,7 +435,6 @@ export default class GameController {
         attackRadius: item.attackRadius,
       };
       this.gameState.playerCharacters.push(info);
-      // console.log(info)
     });
     this.gameState.enemyCharacters = [];
     this.enemyCharacters.forEach((item) => {
@@ -473,6 +472,7 @@ export default class GameController {
     if (!load) {
       GamePlay.showError('Failed to load game');
     } else {
+      this.selectedCharacter = null;
       this.level = load.level;
       this.userTurn = load.userTurn;
       this.playerCharacters = [];
