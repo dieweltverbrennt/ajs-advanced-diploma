@@ -101,14 +101,13 @@ export default class GameController {
         // attack
         if (enemy !== undefined && this.calcAttackRange(this.selectedCharacter).includes(index)) {
           const damage = this.calcDamage(this.selectedCharacter.character, enemy.character);
-          this.gamePlay.showDamage(index, Math.floor(damage)).then(() => {
+          this.gamePlay.showDamage(index, Math.round(damage * 100) / 100).then(() => {
             enemy.character.health -= damage;
             if (enemy.character.health <= 0) {
               enemy.character.health = 0;
-              const enemyHealth = enemy.character.health;
-              this.enemyCharacters = this.enemyCharacters.filter((i) => i.health !== enemyHealth);
-              this.enemyPositions = this.enemyPositions.filter((item) => item !== enemy);
-              this.charactersPositions = this.charactersPositions.filter((item) => item !== enemy);
+              this.enemyCharacters = this.enemyCharacters.filter((i) => i.health !== 0);
+              this.enemyPositions = this.enemyPositions.filter((i) => i.character.health !== 0);
+              this.charactersPositions = [...this.playerPositions, ...this.enemyPositions];
             }
           }).then(() => {
             if (this.level === 4 && this.enemyPositions.length === 0) {
@@ -173,7 +172,7 @@ export default class GameController {
 
     const current = this.charactersPositions.find((item) => item.position === index);
     if (current !== undefined) {
-      const characterInfo = `\u{1F396}${current.character.level}\u{2694}${Math.floor(current.character.attack)}\u{1F6E1}${Math.floor(current.character.defence)}\u{2764}${Math.floor(current.character.health)}`;
+      const characterInfo = `\u{1F396}${current.character.level}\u{2694}${Math.round(current.character.attack * 100) / 100}\u{1F6E1}${Math.round(current.character.defence * 100) / 100}\u{2764}${Math.round(current.character.health * 100) / 100}`;
       this.gamePlay.showCellTooltip(characterInfo, index);
       if (this.playerPositions.find((item) => item.position === index)) {
         this.gamePlay.setCursor(cursors.pointer);
@@ -307,14 +306,13 @@ export default class GameController {
         const target = this.playerPositions.find((item) => arr.some((el) => el === item.position));
         if (target !== undefined) {
           const damage = this.calcDamage(enemy.character, target.character);
-          this.gamePlay.showDamage(target.position, Math.floor(damage)).then(() => {
+          this.gamePlay.showDamage(target.position, Math.round(damage * 100) / 100).then(() => {
             target.character.health -= damage;
             if (target.character.health <= 0) {
               target.character.health = 0;
-              const tarHealth = target.character.health;
-              this.charactersPositions = this.charactersPositions.filter((item) => item !== target);
-              this.playerCharacters = this.playerCharacters.filter((i) => i.health !== tarHealth);
-              this.playerPositions = this.playerPositions.filter((item) => item !== target);
+              this.playerCharacters = this.playerCharacters.filter((i) => i.health !== 0);
+              this.playerPositions = this.playerPositions.filter((i) => i.character.health !== 0);
+              this.charactersPositions = [...this.playerPositions, ...this.enemyPositions];
               if (this.selectedCharacter === target) {
                 this.gamePlay.deselectCell(target.position);
                 this.selectedCharacter = null;
@@ -327,7 +325,6 @@ export default class GameController {
           }).then(() => {
             this.gamePlay.redrawPositions(this.charactersPositions);
             if (this.playerPositions.length === 0) {
-              this.gamePlay.redrawPositions(this.charactersPositions);
               this.gameEnd();
               setTimeout(() => GamePlay.showMessage('You lose!'), 500);
             }
@@ -372,7 +369,7 @@ export default class GameController {
     }
     this.gamePlay.drawUi(themes[this.level]);
     this.enemyCharacters = generateTeam(this.enemyAllowedTypes, this.level, 3);
-    
+
     this.playerTeam = new Team(this.playerCharacters);
     this.enemyTeam = new Team(this.enemyCharacters);
     this.playerPositions = [...this.playerPosition()];
@@ -404,6 +401,7 @@ export default class GameController {
       this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
       this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
       this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
+      this.isGameEnd = false;
     }
 
     this.gamePlay.drawUi(themes[this.level]);
@@ -467,6 +465,7 @@ export default class GameController {
       this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
       this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
       this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
+      this.isGameEnd = false;
     }
     const load = this.stateService.load();
     if (!load) {
