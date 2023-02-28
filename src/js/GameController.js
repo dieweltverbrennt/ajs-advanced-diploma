@@ -105,8 +105,10 @@ export default class GameController {
             enemy.character.health -= damage;
             if (enemy.character.health <= 0) {
               enemy.character.health = 0;
-              this.charactersPositions = this.charactersPositions.filter((item) => item !== enemy);
+              const enemyHealth = enemy.character.health;
+              this.enemyCharacters = this.enemyCharacters.filter((i) => i.health !== enemyHealth);
               this.enemyPositions = this.enemyPositions.filter((item) => item !== enemy);
+              this.charactersPositions = this.charactersPositions.filter((item) => item !== enemy);
             }
           }).then(() => {
             if (this.level === 4 && this.enemyPositions.length === 0) {
@@ -308,13 +310,18 @@ export default class GameController {
           this.gamePlay.showDamage(target.position, Math.floor(damage)).then(() => {
             target.character.health -= damage;
             if (target.character.health <= 0) {
+              target.character.health = 0;
+              const tarHealth = target.character.health;
               this.charactersPositions = this.charactersPositions.filter((item) => item !== target);
+              this.playerCharacters = this.playerCharacters.filter((i) => i.health !== tarHealth);
               this.playerPositions = this.playerPositions.filter((item) => item !== target);
-              this.gamePlay.deselectCell(target.position);
-              this.gamePlay.deselectCell(this.selectedCell);
-              this.selectedCell = null;
               if (this.selectedCharacter === target) {
+                this.gamePlay.deselectCell(target.position);
                 this.selectedCharacter = null;
+              }
+              if (this.selectedCell !== null) {
+                this.gamePlay.deselectCell(this.selectedCell);
+                this.selectedCell = null;
               }
             }
           }).then(() => {
@@ -350,19 +357,30 @@ export default class GameController {
   levelUp() {
     this.level += 1;
     this.playerCharacters.forEach((item) => {
-      if (item.health < 0) {
-        item.health = 0;
-      }
       item.levelUp();
     });
+    if (this.playerCharacters.length < 3) {
+      const len = this.playerCharacters.length;
+      const newChar = generateTeam(this.playerAllowedTypes, 1, 3 - len);
+      newChar.forEach((item) => {
+        item.health = 0;
+        for (let i = 1; i < this.level; i += 1) {
+          item.levelUp();
+        }
+        this.playerCharacters.push(item);
+      });
+    }
     this.gamePlay.drawUi(themes[this.level]);
     this.enemyCharacters = generateTeam(this.enemyAllowedTypes, this.level, 3);
+    
     this.playerTeam = new Team(this.playerCharacters);
     this.enemyTeam = new Team(this.enemyCharacters);
     this.playerPositions = [...this.playerPosition()];
     this.enemyPositions = [...this.enemyPosition()];
     this.charactersPositions = [...this.playerPositions, ...this.enemyPositions];
     this.gamePlay.redrawPositions(this.charactersPositions);
+    this.selectedCharacter = null;
+    this.selectedCell = null;
   }
 
   gameEnd() {
@@ -407,11 +425,30 @@ export default class GameController {
     this.gameState.selectedCell = this.selectedCell;
     this.gameState.playerCharacters = [];
     this.playerCharacters.forEach((item) => {
-      this.gameState.playerCharacters.push(Object.getPrototypeOf(item));
+      const info = {
+        level: item.level,
+        type: item.type,
+        health: item.health,
+        attack: item.attack,
+        defence: item.defence,
+        moveDistance: item.moveDistance,
+        attackRadius: item.attackRadius,
+      };
+      this.gameState.playerCharacters.push(info);
+      // console.log(info)
     });
     this.gameState.enemyCharacters = [];
     this.enemyCharacters.forEach((item) => {
-      this.gameState.enemyCharacters.push(Object.getPrototypeOf(item));
+      const info = {
+        level: item.level,
+        type: item.type,
+        health: item.health,
+        attack: item.attack,
+        defence: item.defence,
+        moveDistance: item.moveDistance,
+        attackRadius: item.attackRadius,
+      };
+      this.gameState.enemyCharacters.push(info);
     });
     this.gameState.playerPositions = [];
     this.playerPositions.forEach((item) => {
@@ -427,35 +464,37 @@ export default class GameController {
   }
 
   onLoadGameClick() {
+    if (this.isGameEnd) {
+      this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
+      this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
+      this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
+    }
     const load = this.stateService.load();
     if (!load) {
       GamePlay.showError('Failed to load game');
     } else {
       this.level = load.level;
       this.userTurn = load.userTurn;
-      this.selectedCharacter = load.selectedCharacter;
-      this.selectedCell = load.selectedCell;
-
       this.playerCharacters = [];
       load.playerCharacters.forEach((item) => {
         if (item.type === 'swordsman') {
-          const char = new Swordsman(item.level);
-          char.attack = item.attack;
-          char.defence = item.defence;
-          char.health = item.health;
-          this.playerCharacters.push(char);
+          const swordsman = new Swordsman(item.level);
+          swordsman.attack = item.attack;
+          swordsman.defence = item.defence;
+          swordsman.health = item.health;
+          this.playerCharacters.push(swordsman);
         } else if (item.type === 'bowman') {
-          const char = new Bowman(item.level);
-          char.attack = item.attack;
-          char.defence = item.defence;
-          char.health = item.health;
-          this.playerCharacters.push(char);
+          const bowman = new Bowman(item.level);
+          bowman.attack = item.attack;
+          bowman.defence = item.defence;
+          bowman.health = item.health;
+          this.playerCharacters.push(bowman);
         } else if (item.type === 'magician') {
-          const char = new Magician(item.level);
-          char.attack = item.attack;
-          char.defence = item.defence;
-          char.health = item.health;
-          this.playerCharacters.push(char);
+          const magician = new Magician(item.level);
+          magician.attack = item.attack;
+          magician.defence = item.defence;
+          magician.health = item.health;
+          this.playerCharacters.push(magician);
         }
       });
       this.enemyCharacters = [];
@@ -495,6 +534,8 @@ export default class GameController {
       this.charactersPositions = [...this.playerPositions, ...this.enemyPositions];
       this.gamePlay.drawUi(themes[this.level]);
       this.gamePlay.redrawPositions(this.charactersPositions);
+
+      GamePlay.showMessage('The game loaded!');
     }
   }
 }
